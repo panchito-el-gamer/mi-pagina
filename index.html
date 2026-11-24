@@ -1,364 +1,1015 @@
-<!DOCTYPE html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover"><title>Bolita Roja</title>
-<style>
-:root{--bg:#0b0e1a;--fg:#fff;--pn:rgba(24,30,52,.94);--ov:rgba(10,14,26,.9);--bt:#ff2a2a;--bt2:#ff7b00;--ac:#ffd60a;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
-html{height:100%;scroll-padding-top:env(safe-area-inset-top,0px)}
-body{height:100%;margin:0;background:radial-gradient(circle at 50% 30%,#273259 0%,#090c16 100%);color:var(--fg);overflow:hidden;font-family:system-ui,-apple-system,sans-serif;touch-action:none;user-select:none;-webkit-user-select:none}
-#c{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);background:#000;box-shadow:0 0 0 2px rgba(255,214,10,.25),0 14px 48px rgba(0,0,0,.8);border-radius:8px}
-.b{position:fixed;bottom:calc(14px + env(safe-area-inset-bottom,0px));width:66px;height:66px;border-radius:50%;background:radial-gradient(circle at 30% 25%,rgba(255,255,255,.46),rgba(255,255,255,.14));border:2px solid rgba(255,255,255,.82);box-shadow:0 6px 18px rgba(0,0,0,.45),inset 0 2px 6px rgba(255,255,255,.5);color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;text-align:center;line-height:1;transition:transform .05s,background .05s}
-.b.act{transform:scale(.88);background:rgba(255,214,10,.52);border-color:#ffd60a}
-#bl{left:16px}#br{left:94px}#bj{right:16px;background:radial-gradient(circle at 30% 25%,rgba(255,105,90,.68),rgba(215,35,35,.32))}#ba{right:94px;font-size:22px;background:radial-gradient(circle at 30% 25%,rgba(255,220,40,.65),rgba(255,130,0,.3))}
-#topb{position:fixed;top:calc(6px + env(safe-area-inset-top,0px));left:50%;transform:translateX(-50%);display:flex;gap:8px;z-index:5}
-.tb{background:rgba(12,16,30,.75);color:#fff;border:1px solid rgba(255,214,10,.38);border-radius:10px;font-size:15px;padding:5px 13px;box-shadow:0 4px 12px rgba(0,0,0,.45)}
-#ui{position:fixed;inset:0;background:var(--ov);overflow:auto;display:flex;flex-direction:column;align-items:center;padding:calc(14px + env(safe-area-inset-top,0px)) 12px 24px;gap:9px;touch-action:pan-y;text-align:center;z-index:8}
-#ui h1{margin:2px 0 4px;font-size:30px;letter-spacing:.5px;background:linear-gradient(180deg,#fff 15%,#ffd60a 58%,#ff4d4d 100%);-webkit-background-clip:text;-webkit-text-fill-color:transparent;filter:drop-shadow(0 4px 10px rgba(255,60,60,.6))}
-#ui h2{margin:2px 0;color:#ffd60a;text-shadow:0 2px 10px rgba(255,160,0,.45)}
-#ui h3{margin:8px 0 2px;color:#72efdd;font-size:15px;text-transform:uppercase;letter-spacing:1.2px}
-button.m,.row button{background:linear-gradient(180deg,#ff7b00,#e52521);color:#fff;border:1px solid rgba(255,255,255,.32);border-radius:12px;padding:10px 20px;font-size:16px;font-weight:800;min-width:230px;box-shadow:0 4px 0 #8f1111,0 8px 18px rgba(0,0,0,.45);cursor:pointer;transition:transform .07s}
-button.m:active,.row button:active{transform:translateY(2px);box-shadow:0 2px 0 #8f1111}
-.row{background:var(--pn);border:1px solid rgba(255,255,255,.16);border-radius:12px;padding:9px 14px;display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:center;width:min(560px,94%);box-shadow:0 6px 16px rgba(0,0,0,.35)}
-.row button{min-width:0;padding:7px 14px;font-size:14px;background:linear-gradient(180deg,#4cc9f0,#2563eb);box-shadow:0 3px 0 #1d4ed8}
-.grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;width:min(560px,94%)}
-.grid button{background:var(--pn);color:var(--fg);border:2px solid rgba(255,255,255,.24);border-radius:11px;padding:8px 2px;font-size:16px;font-weight:700;box-shadow:0 3px 0 rgba(0,0,0,.5)}
-.grid button.ok{background:linear-gradient(180deg,#38b000,#1b7a2b);color:#fff;border-color:#9ef01a;box-shadow:0 3px 0 #0f4c1a}.grid button:disabled{opacity:.35}
-small{display:block;font-size:11px;opacity:.9;font-weight:500}
-#rot{display:none;position:fixed;inset:0;z-index:12;background:radial-gradient(circle,#1e253d,#0b0e17);color:#fff;align-items:center;justify-content:center;font-size:20px;text-align:center}
-@media(orientation:portrait){#rot{display:flex}}
-</style></head><body>
-<canvas id="c" width="800" height="400"></canvas>
-<div id="ctl" style="display:none"><div id="bl" class="b">◀</div><div id="br" class="b">▶</div><div id="bj" class="b">⤒</div><div id="ba" class="b">—</div><div id="topb"><button id="snd" class="tb" onclick="togSnd()">🔊</button><button id="pz" class="tb" onclick="pause()">⏸</button></div></div>
-<div id="ui"></div>
-<div id="rot">📱 Gira tu teléfono<br>para jugar en horizontal</div>
-<script>
-const $=i=>document.getElementById(i),cv=$('c'),g=cv.getContext('2d'),W=800,H=400,GY=330;
-const D=['Normal','Difícil','Extremo','Demoníaco'],MU=[1,1.5,2.5,4],SPD=[1,1.2,1.4,1.7],DEN=[1,.9,.8,.7];
-const ITEMS=[['hat','🎩 Sombrero',60],['gaf','🕶️ Gafas',90],['cuer','😈 Cuernos',150],['capa','🦸 Capa',220],['cor','👑 Corona',400],['cAz','🔵 Color azul',100],['cVe','🟢 Color verde',100],['cOr','🟡 Color dorado',350],['cRo','💗 Color rosa',100],['cNe','⚫ Color negro',250],['tFu','🔥 Estela de fuego',300],['tAr','🌈 Estela arcoíris',500]];
-const COL={cAz:'#3a7bff',cVe:'#2ecc71',cOr:'#f5c518',cRo:'#ff6fb5',cNe:'#2b2d42'};
-const ABN={dash:'💨 Dash',inm:'⭐ Inmortalidad',mas:'🦘 Super masa'},ABC=[200,800,2000];
-let S={coins:0,own:[],eq:[],ab:{dash:0,inm:0,mas:0},sel:'',done:{},best:{},inf:0,mute:0,stars:{},pas:{mag:0,esc:0}};
-try{const x=JSON.parse(localStorage.getItem('bolita')||'{}');Object.assign(S,x)}catch(e){}
-const save=()=>{try{localStorage.setItem('bolita',JSON.stringify(S))}catch(e){}};
-const K={l:0,r:0,j:0,a:0,jp:0};let G=null,paused=1;
+<!DOCTYPE html>
+<html lang="es" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>urgye.fun — Juegos indie por panchito-el-gamer</title>
+  <meta name="description" content="Portal personal de juegos web en HTML, HTML5 Canvas y JavaScript creados por panchito-el-gamer en urgye.fun." />
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            display: ['Space Grotesk', 'sans-serif'],
+            sans: ['Inter', 'sans-serif'],
+          },
+          colors: {
+            surface: '#090b10',
+            card: '#111522',
+            cardHover: '#161c2e',
+          }
+        }
+      }
+    };
+  </script>
+  <style>
+    * {
+      box-sizing: border-box;
+    }
+    html, body {
+      margin: 0;
+      padding: 0;
+      background-color: #090b10;
+      color: #f8fafc;
+      font-family: 'Inter', sans-serif;
+      scroll-behavior: smooth;
+    }
+    .font-display {
+      font-family: 'Space Grotesk', sans-serif;
+    }
+    .grid-bg {
+      background-image:
+        linear-gradient(to right, rgba(34, 211, 238, 0.05) 1px, transparent 1px),
+        linear-gradient(to bottom, rgba(168, 85, 247, 0.05) 1px, transparent 1px);
+      background-size: 32px 32px;
+    }
+    .game-card {
+      transition: transform 0.2s ease, border-color 0.2s ease, box-shadow 0.2s ease;
+    }
+    .game-card:hover {
+      transform: translateY(-3px);
+    }
+    .custom-scroll::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    .custom-scroll::-webkit-scrollbar-track {
+      background: #0d1018;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb {
+      background: #273047;
+      border-radius: 9999px;
+    }
+    .custom-scroll::-webkit-scrollbar-thumb:hover {
+      background: #3b486b;
+    }
+  </style>
+</head>
+<body class="min-h-screen flex flex-col bg-[#090b10] text-slate-100 selection:bg-cyan-400 selection:text-slate-950">
 
-/* AUDIO LIGERO (Web Audio API) */
-let AC=null,bgmT=0,bgmStep=0,rollT=0,activeVoices=0;
-function initAudio(){if(!AC){const C=window.AudioContext||window.webkitAudioContext;if(C)AC=new C()}if(AC&&AC.state==='suspended')AC.resume().catch(()=>{})}
-function togSnd(){S.mute=S.mute?0:1;save();$('snd').textContent=S.mute?'🔇':'🔊';if(!S.mute)sfx('ui')}
-function tone(f,f2,dur,type='sine',vol=.1,delay=0){if(S.mute||activeVoices>10)return;initAudio();if(!AC)return;
-activeVoices++;
-const t=AC.currentTime+delay,o=AC.createOscillator(),gn=AC.createGain();
-o.type=type;o.frequency.setValueAtTime(f,t);if(f2)o.frequency.exponentialRampToValueAtTime(Math.max(20,f2),t+dur);
-gn.gain.setValueAtTime(vol,t);gn.gain.exponentialRampToValueAtTime(.001,t+dur);
-o.connect(gn);gn.connect(AC.destination);o.start(t);o.stop(t+dur);
-o.onended=()=>{activeVoices=Math.max(0,activeVoices-1)}}
-function sfx(k){
-if(k=='ui')tone(540,840,.07,'triangle',.08);
-else if(k=='buy')[587,784,988,1174].forEach((n,i)=>tone(n,n*1.04,.1,'triangle',.1,i*.06));
-else if(k=='err')tone(190,95,.15,'sawtooth',.1);
-else if(k=='jmp'){tone(220,620,.14,'sine',.12);tone(440,880,.09,'triangle',.05,.03)}
-else if(k=='jmpM'){tone(150,740,.22,'triangle',.14);tone(300,900,.14,'sine',.07,.02)}
-else if(k=='dash'){tone(520,140,.15,'sawtooth',.11);tone(280,110,.15,'square',.07)}
-else if(k=='pow')[523,659,784,1046,1318].forEach((n,i)=>tone(n,n*1.06,.11,'triangle',.1,i*.045));
-else if(k=='aloe')[440,554,659,880,1108,1318].forEach((n,i)=>tone(n,n*1.1,.1,'sine',.11,i*.04));
-else if(k=='brk'){tone(160,55,.12,'square',.1);tone(95,45,.12,'sawtooth',.08)}
-else if(k=='kill'){tone(390,820,.09,'square',.1);tone(780,1180,.11,'triangle',.1,.05)}
-else if(k=='hitB'){tone(240,75,.22,'sawtooth',.15);tone(110,55,.18,'sine',.14)}
-else if(k=='die'){tone(320,65,.36,'sawtooth',.14);tone(160,45,.38,'triangle',.12,.05)}
-else if(k=='win')[523,659,784,1046,1318,1568].forEach((n,i)=>tone(n,n*1.02,.14,'triangle',.12,i*.085));
-}
-const BGM=[
-[[261.6,329.6,392,523.2,392,329.6,293.7,440],[130.8,130.8,196,196,146.8,146.8,220,196]],
-[[220,277.2,329.6,440,329.6,277.2,246.9,370],[110,110,164.8,164.8,123.5,123.5,185,164.8]],
-[[196,246.9,293.7,392,349.2,293.7,261.6,392],[98,98,146.8,146.8,130.8,130.8,196,174.6]],
-[[146.8,174.6,220,293.7,207.6,174.6,146.8,233.1],[73.4,73.4,110,146.8,103.8,103.8,73.4,116.5]]
-];
-function tickBgm(){if(S.mute||!G||paused||G.dead||activeVoices>6)return;
-const bs=G.B&&G.B.hp>0&&G.p.x>G.L-1100,iv=bs?10:(G.alt>0?10:14);
-if(++bgmT>=iv){bgmT=0;const pair=BGM[bs?3:(G.sec-1)],idx=bgmStep++%8;
-tone(pair[0][idx],pair[0][idx]*.99,.15,bs?'sawtooth':'triangle',bs?.036:.03);
-if(idx%2==0)tone(pair[1][idx],pair[1][idx],.18,'sine',bs?.045:.035)}}
+  <!-- Barra superior -->
+  <header class="sticky top-0 z-30 backdrop-blur-xl bg-[#090b10]/85 border-b border-slate-800/80">
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between gap-3">
+      <!-- Marca -->
+      <a href="#top" class="flex items-center gap-2.5 shrink-0 group">
+        <span class="w-9 h-9 rounded-xl bg-gradient-to-br from-cyan-400 via-violet-500 to-lime-400 p-[1.5px] shadow-lg shadow-cyan-500/10">
+          <span class="w-full h-full rounded-[10.5px] bg-[#0b0e16] flex items-center justify-center font-display font-bold text-base text-white group-hover:text-cyan-300 transition">
+            U
+          </span>
+        </span>
+        <div class="leading-none">
+          <span class="font-display font-bold text-lg sm:text-xl tracking-tight text-white block">
+            urgye<span class="text-cyan-400">.fun</span>
+          </span>
+          <span class="text-[11px] text-slate-400 font-medium hidden xs:block">
+            panchito-el-gamer
+          </span>
+        </div>
+      </a>
+      
+        <!-- Acciones principales -->
+      <div class="flex items-center gap-2">
+        <button
+          id="btnOpenAddGame"
+          type="button"
+          class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800/90 hover:bg-slate-700 text-slate-100 border border-slate-700/80 transition flex items-center gap-1.5"
+        >
+          <span>+</span>
+          <span>Agregar juego</span>
+        </button>
 
-/* EFECTOS VISUALES LIGEROS */
-let PT=[],FT=[],TR=[],shake=0,flash=0,flashCol='#fff';
-function burst(x,y,c,n=10,spd=4.2,sz=4){for(let i=0;i<n;i++){if(PT.length>75)PT.shift();const a=Math.random()*6.2832,v=(.3+Math.random()*.8)*spd;
-PT.push({x,y,vx:Math.cos(a)*v,vy:Math.sin(a)*v-1.3,c,s:sz*(.6+Math.random()*.7),l:20+Math.random()*14|0,ml:34,g:.18})}}
-function floatTxt(x,y,t,c='#ffd60a'){if(FT.length>14)FT.shift();FT.push({x,y,t,c,l:46})}
-function updFX(){
-if(shake>0)shake=Math.max(0,shake-.85);
-if(flash>0)flash=Math.max(0,flash-.055);
-for(let i=PT.length-1;i>=0;i--){const p=PT[i];p.x+=p.vx;p.y+=p.vy;p.vy+=p.g;if(--p.l<=0)PT.splice(i,1)}
-for(let i=FT.length-1;i>=0;i--){const f=FT[i];f.y-=.75;if(--f.l<=0)FT.splice(i,1)}
-for(let i=TR.length-1;i>=0;i--)if(--TR[i].l<=0)TR.splice(i,1)}
-document.addEventListener('click',e=>{if(e.target.closest&&e.target.closest('#ui button'))sfx('ui')});
+        <button
+          id="btnOpenExport"
+          type="button"
+          class="px-3 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-gradient-to-r from-cyan-400 to-lime-400 hover:brightness-110 text-slate-950 transition flex items-center gap-1.5 shadow-md shadow-cyan-500/15"
+        >
+          <span>Exportar HTML</span>
+        </button>
+      </div>
+    </div>
+  </header>
 
-const mb=a=>()=>{a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296};
-const ov=(a,b)=>a.x<b.x+b.w&&a.x+a.w>b.x&&a.y<b.y+b.h&&a.y+a.h>b.y;
-function rs(){const s=Math.min(innerWidth/W,innerHeight/H);cv.style.width=W*s+'px';cv.style.height=H*s+'px'}addEventListener('resize',rs);rs();
+  <!-- Contenido principal -->
+  <main id="top" class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6 sm:py-10 space-y-8">
 
-/* UI */
-function show(h){$('ui').innerHTML=h;$('ui').style.display='flex';$('ctl').style.display='none';paused=1}
-function hide(){$('ui').style.display='none';$('ctl').style.display='block';paused=0;$('snd').textContent=S.mute?'🔇':'🔊'}
-function pause(){show('<h2>⏸ Pausa</h2><button class="m" onclick="hide()">Continuar</button><button class="m" onclick="restart()">🔄 Reiniciar</button><button class="m" onclick="menu()">Salir al menú</button>')}
-function menu(){G=null;show(`<h1>🔴 Bolita Roja</h1><button class="m" onclick="play('i',0,0,1)">♾️ Modo infinito<small>Récord: ${S.inf|0}</small></button><button class="m" onclick="story()">📖 Modo historia<small>⭐ ${Array.from({length:30},(_,i)=>sg(i+1)).reduce((a,b)=>a+b,0)} / 90</small></button><button class="m" onclick="shop()">🛒 Tienda<small>🪙 ${S.coins}</small></button><small>Controles: ◀ ▶ a la izquierda · saltar y habilidad a la derecha<br>(teclado: flechas/AD, espacio, Shift)</small>`)}
-function story(){let h='<h2>📖 Modo historia</h2><small>Jefe en la etapa 5 y 10 de cada sección (👹)</small>';
-for(let s=0;s<3;s++){h+=`<h3>Sección ${s+1} · ${['🌿 Pradera Soleada','🌅 Cañón Atardecer','🌌 Noche Cósmica'][s]}</h3><div class="grid">`;for(let i=1;i<=10;i++){const n=s*10+i,lk=n>1&&!S.done[n-1];h+=`<button ${lk?'disabled':''} class="${S.done[n]?'ok':''}" onclick="pick(${n})">${i%5?'':'👹'}${n}<small>${'⭐'.repeat(sg(n))||'&nbsp;'}</small></button>`}h+='</div>'}
-show(h+'<button class="m" onclick="menu()">← Volver</button>')}
-function pick(n){if(!S.done[n])return play('s',n,0,1);let h=`<h2>Etapa ${n}</h2><small>Elige dificultad</small>`;D.forEach((d,i)=>h+=`<button class="m" onclick="play('s',${n},${i},1)">${d} ×${MU[i]}<small>Mejor: ${S.best[n+'_'+i]||0}</small></button>`);show(h+'<button class="m" onclick="story()">← Volver</button>')}
-function desc(k,l){if(!l)return'';return k=='dash'?`Distancia ${Math.round((11+2*l)*12)} · enfriamiento ${(3.5-.5*l).toFixed(1)}s`:`Dura ${10+3*(l-1)}s`}
-function shop(){let h=`<h2>🛒 Tienda</h2><b>🪙 ${S.coins}</b><h3>Habilidades</h3>`;
-for(const k in ABN){const l=S.ab[k];h+=`<div class="row"><b>${ABN[k]}</b> Nv ${l}/3<small style="width:100%">${desc(k,l)||'Sin comprar'}</small>`;if(l<3)h+=`<button onclick="up('${k}')">${l?'Mejorar':'Comprar'} 🪙${ABC[l]}</button>`;if(l)h+=`<button onclick="selA('${k}')">${S.sel==k?'✔ Equipada':'Equipar'}</button>`;h+='</div>'}
-h+='<h3>Pasivas</h3>';for(const k in PAS){const l=S.pas[k],mx=PAS[k][1].length;h+=`<div class="row"><b>${PAS[k][0]}</b> Nv ${l}/${mx}<small style="width:100%">${PAS[k][2]}</small>${l<mx?`<button onclick="upP('${k}')">${l?'Mejorar':'Comprar'} 🪙${PAS[k][1][l]}</button>`:''}</div>`}h+='<h3>Accesorios</h3>';ITEMS.forEach(([id,n,p])=>{const o=S.own.includes(id);h+=`<div class="row">${n}${o?`<button onclick="eqp('${id}')">${S.eq.includes(id)?'Quitar':'Equipar'}</button>`:`<button onclick="buy('${id}',${p})">🪙${p}</button>`}</div>`});
-show(h+'<button class="m" onclick="menu()">← Volver</button>');}
-function up(k){const c=ABC[S.ab[k]];if(S.coins<c){sfx('err');return toast('No te alcanzan las monedas')}sfx('buy');S.coins-=c;S.ab[k]++;if(!S.sel)S.sel=k;save();shop()}
-function selA(k){sfx('ui');S.sel=k;save();shop()}
-function buy(id,p){if(S.coins<p){sfx('err');return toast('No te alcanzan las monedas')}sfx('buy');S.coins-=p;S.own.push(id);eqp(id,1)}
-function eqp(id,nr){if(!nr)sfx('ui');const i=S.eq.indexOf(id);if(i>=0)S.eq.splice(i,1);else{if(id[0]=='c'&&id!='cor')S.eq=S.eq.filter(x=>x[0]!='c'||x=='cor');if(id[0]=='t')S.eq=S.eq.filter(x=>x[0]!='t');S.eq.push(id)}save();shop()}
-const PAS={mag:['🧲 Imán de monedas',[150,500,1200],'Atrae las monedas desde más lejos'],esc:['🛡️ Escudo inicial',[400],'Empiezas cada etapa con un escudo']};
-function upP(k){const c=PAS[k][1][S.pas[k]];if(S.coins<c){sfx('err');return toast('No te alcanzan las monedas')}sfx('buy');S.coins-=c;S.pas[k]++;save();shop()}
-const sg=n=>Math.max(0,...[0,1,2,3].map(d=>S.stars[n+'_'+d]||0));
-function restart(){G.mode=='i'?play('i',0,0,1):play('s',G.n,G.d,1)}
-function vib(n){try{if(!S.mute&&navigator.vibrate)navigator.vibrate(n)}catch(e){}}
-function toast(t){const d=document.createElement('div');d.textContent=t;d.style.cssText='position:fixed;left:50%;bottom:calc(30px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#e52521;color:#fff;padding:10px 18px;border-radius:12px;font-weight:700;z-index:30;box-shadow:0 6px 16px rgba(0,0,0,.5)';document.body.appendChild(d);setTimeout(()=>d.remove(),1700)}
-const VG=(()=>{const v=g.createRadialGradient(400,200,170,400,200,500);v.addColorStop(0,'rgba(0,0,0,0)');v.addColorStop(1,'rgba(0,0,0,.4)');return v})();
-/* JUEGO */
-function play(mode,n,d,att){initAudio();PT=[];FT=[];TR=[];shake=0;flash=0;K.jp=0;rollT=0;
-const sec=mode=='i'?1:((n-1)/10|0)+1,st=(n-1)%10+1,boss=mode=='s'&&st%5==0;
-G={mode,n,d,att,sec,st,boss,rng:mode=='i'?Math.random:mb(n*977+d*31),p:{x:80,y:GY-16,vx:0,vy:0,on:1,f:1,coy:0,jm:0,rot:0},cam:0,bl:[],lv:[],sp:[],en:[],pr:[],al:[],co:[],pl:[],spr:[],sh:[],shield:S.pas.esc?1:0,hurt:0,ct:0,banner:0,cn:0,cb:0,bo:0,jb:0,kills:0,t:0,inm:0,mas:0,alt:0,dash:0,cd:0,dead:0,B:null,L:mode=='i'?1e9:(boss?2100:2600+n*60),fl:!boss,genX:500};
-const q=G;if(mode=='i')q.genX=gen(500,1400);else{gen(450,q.L-(boss?800:350));if(boss){const hp=Math.round(((st==10?7:4)+sec*2)*(1+.25*d));q.B={x:q.L-380,y:GY-80,w:80,h:80,vy:0,t:0,hp,mhp:hp,inv:0,chg:0,tel:0,cd:1,act:0}}}
-q.ct=q.co.length;q.banner=att>1?45:120;hide();}
-function mk(k,x){const q=G,s=k=='hex'?34:30,y=k=='rom'?200+q.rng()*60:GY-s;return{k,x,y,y0:y,w:s,h:s,hx:x,vx:(q.rng()<.5?-1:1)*1.3*SPD[q.d],vy:0,t:q.rng()*100|0,ch:0}}
-function arc(x,w){for(let i=0;i<5;i++)G.co.push({x:x+w/2+(i-2)*28,y:GY-95-Math.sin(i/4*Math.PI)*45})}
-function gen(x,x1){const q=G,r=q.rng,d=q.d,inf=q.mode=='i',dn=inf?Math.min(1,x/9000):(q.n-1)/30;
-const ty=['sq','tri'];if(q.sec>1||(inf&&x>2500))ty.push('pen','rom');if(q.sec>2||(inf&&x>5000))ty.push('hex');
-while(x<x1){const t=r();let w=40;
-if(t<.18){const h=1+(r()<.4?1:0),c=1+(r()<.3?1:0);q.bl.push({x,y:GY-40*h,w:40*c,h:40*h});w=40*c;arc(x,w)}
-else if(t<.30){w=90+r()*40;q.lv.push([x,w]);arc(x,w)}
-else if(t<.42){w=60;q.sp.push({x,w});arc(x,w)}
-else if(t<.46){q.al.push({x,y:GY-34,w:30,h:34})}
-else if(t<.49)q.sh.push({x,y:GY-30,w:24,h:24});else if(t<.54)q.spr.push({x,y:GY-14,w:36,h:14});else if(t<.61){const py=GY-85-(r()*30|0);q.pl.push({x,y:py,w:120,h:12});w=120;for(let i=0;i<3;i++)q.co.push({x:x+20+i*40,y:py-22})}else q.en.push(mk(ty[r()*ty.length|0],x));
-x+=w+Math.max(210,(300-dn*100)*DEN[d]*(.8+r()*.6))}return x}
+    <!-- Hero / Presentación -->
+    <section class="relative overflow-hidden rounded-3xl border border-slate-800/90 bg-[#111522] grid-bg p-6 sm:p-8 lg:p-10">
+      <div class="pointer-events-none absolute -top-24 -right-24 w-72 h-72 rounded-full bg-violet-600/15 blur-3xl"></div>
+      <div class="pointer-events-none absolute -bottom-24 -left-24 w-72 h-72 rounded-full bg-cyan-500/15 blur-3xl"></div>
 
-function die(){if(G.hurt>0)return;if(G.shield&&!G.dead){G.shield=0;G.hurt=75;sfx('hitB');shake=8;flash=.3;flashCol='#72efdd';vib(40);burst(G.p.x,G.p.y,'#72efdd',16,5,4);floatTxt(G.p.x,G.p.y-30,'🛡️ ¡Escudo roto!','#72efdd');return}if(!G.dead){vib(90);G.dead=70;sfx('die');shake=12;flash=.42;flashCol='#ff1e1e';burst(G.p.x,G.p.y,'#ff4d4d',18,6.5,5)}}
-function ab(){const q=G,k=S.sel,l=S.ab[k];if(q.dead||q.cd>0||!k||!l)return;
-if(k=='dash'){q.dash=12;q.cd=Math.round((3.5-.5*l)*60);sfx('dash');shake=5;burst(q.p.x,q.p.y,'#72efdd',12,5,4.2)}
-else{const t=(10+3*(l-1))*60;q[k]=t;q.cd=t+480;sfx('pow');flash=.28;flashCol=k=='inm'?'#ffd60a':'#48cae4';burst(q.p.x,q.p.y,flashCol,14,5,4.2);floatTxt(q.p.x,q.p.y-22,k=='inm'?'⭐ ¡INMORTAL!':'🦘 ¡SUPER MASA!',flashCol)}}
-function kill(e,st){e.d=1;G.kills++;G.cn++;vib(10);if(st){G.cb++;if(G.cb>1){G.bo+=50*(G.cb-1);floatTxt(e.x+e.w/2,e.y-26,'🔥 COMBO x'+G.cb,'#ff9f1c')}}sfx('kill');shake=5;burst(e.x+e.w/2,e.y+e.h/2,EC[e.k],14,5,4.5);floatTxt(e.x+e.w/2,e.y-8,'+100','#ffd60a')}
-function hitB(b){if(b.inv>0||b.hp<=0)return;b.hp--;b.inv=60;if(b.hp==b.mhp>>1)floatTxt(b.x+40,b.y-44,'😡 ¡ENFURECIDO!','#ff595e');sfx('hitB');shake=10;flash=.32;flashCol='#ff9f1c';burst(b.x+40,b.y+40,'#ff595e',18,6.5,5);floatTxt(b.x+40,b.y-12,'💥 ¡GOLPE!','#ffbe0b');
-if(b.hp<=0){G.kills+=5;G.fl=true;sfx('win');shake=15;flash=.42;flashCol='#ffd60a';burst(b.x+40,b.y+40,'#ffd60a',28,8,6);floatTxt(b.x+40,b.y-28,'👑 ¡JEFE DERROTADO!','#72efdd')}}
+      <div class="relative flex flex-col lg:flex-row lg:items-center justify-between gap-8">
+        <div class="max-w-2xl space-y-4">
+          <div class="inline-flex flex-wrap items-center gap-2 px-3 py-1 rounded-full bg-slate-900/90 border border-slate-700/80 text-xs font-medium text-cyan-300">
+            <span class="w-2 h-2 rounded-full bg-lime-400"></span>
+            <span>urgye.fun</span>
+            <span class="text-slate-600">•</span>
+            <span class="text-violet-300">Creado por panchito-el-gamer</span>
+          </div>
 
-function upd(){const q=G,p=q.p;q.t++;if(q.cd>0)q.cd--;if(q.banner>0)q.banner--;tickBgm();updFX();
-if(q.dead){if(--q.dead==0){q.mode=='i'?endI():play('s',q.n,q.d,q.att+1)}return}
-if(q.inm>0)q.inm--;if(q.mas>0)q.mas--;if(q.alt>0)q.alt--;if(q.hurt>0)q.hurt--;
-if(K.a){K.a=0;ab()}
-const imm=q.inm>0||q.alt>0||q.dash>0||q.hurt>0,R=q.mas>0?20:16,dx=K.r-K.l;if(dx)p.f=dx;
-if(q.mode=='i'){const ns=Math.min(3,1+(p.x/3000|0));if(ns>q.sec){q.sec=ns;q.zone=1;q.banner=100;q.cn+=10;floatTxt(p.x,p.y-40,'+10 🪙 ¡Nueva zona!')}}
-if(q.dash>0){q.dash--;p.vx=p.f*(11+2*S.ab.dash);p.vy=0;if(TR.length<12)TR.push({x:p.x,y:p.y,r:R,l:8,ml:8,c:'#48cae4'})}
-else{const tv=dx*4.2*(q.alt>0?1.7:1)*(q.mode=='i'?1+Math.min(.4,p.x/30000):1);p.vx+=(tv-p.vx)*(p.on?.4:.25);if(Math.abs(p.vx)<.1)p.vx=0}
-p.x+=p.vx;p.rot+=p.vx/R;if(p.x<R)p.x=R;
+          <h1 class="font-display font-bold text-3xl sm:text-4xl lg:text-5xl tracking-tight text-white leading-[1.08]">
+            Juegos web directos, rápidos y hechos por
+            <span class="bg-gradient-to-r from-cyan-400 via-violet-400 to-lime-400 bg-clip-text text-transparent">
+              panchito-el-gamer
+            </span>
+          </h1>
 
-if(p.on&&Math.abs(p.vx)>1.2&&++rollT%8==0)tone(110+Math.abs(p.vx)*14,90,.03,'triangle',.02);
-if(p.on&&Math.abs(p.vx)>1&&q.t%6==0&&PT.length<75)PT.push({x:p.x-p.f*R*.5,y:GY-2,vx:-p.f*(.8+Math.random()),vy:-.9-Math.random(),c:q.alt>0?'#74c69d':'rgba(255,255,255,.7)',s:3.2,l:13,ml:13,g:.12});
-if((q.alt>0||q.inm>0||q.mas>0)&&q.t%4==0&&PT.length<75){const ac=q.alt>0?'#52b788':(q.inm>0?'#ffd60a':'#4cc9f0');
-PT.push({x:p.x+(Math.random()-.5)*R*1.3,y:p.y+(Math.random()-.5)*R*1.3,vx:-p.vx*.25,vy:-1.1,c:ac,s:3.5,l:14,ml:14,g:0})}
-{const tr=S.eq.find(x=>x[0]=='t');if(tr&&q.t%2==0&&PT.length<75&&(Math.abs(p.vx)>1||!p.on))PT.push({x:p.x,y:p.y,vx:-p.vx*.1,vy:Math.random()-.5,c:tr=='tFu'?['#ff4d00','#ff9f1c','#ffd60a'][q.t%3]:'hsl('+(q.t*12%360)+',90%,60%)',s:5,l:16,ml:16,g:-.02})}
-if(q.alt>0&&q.t%4==0&&TR.length<12)TR.push({x:p.x,y:p.y,r:R*.85,l:7,ml:7,c:'rgba(82,183,136,.55)'});
+          <p class="text-slate-300 text-sm sm:text-base leading-relaxed">
+            Combate rápido, oleadas de zombis, espacio, acción e incrementales de héroes con huevos, fusión 3x y renacimiento. Abre cualquiera desde el celular o la computadora, configura tus URLs de Vercel/GitHub y exporta el código cuando quieras subirlo.
+          </p>
+        </div>
 
-const box=()=>({x:p.x-R,y:p.y-R,w:2*R,h:2*R}),bk=b=>{b.d=1;sfx('brk');shake=4;burst(b.x+b.w/2,b.y+b.h/2,'#c68b59',10,4.5,4)};
-for(const b of q.bl)if(!b.d&&ov(box(),b)){if(imm){bk(b);continue}p.x=p.vx>0?b.x-R:b.x+b.w+R}
-if(p.on)p.coy=6;else if(p.coy>0)p.coy--;
-if(q.jb>0)q.jb--;if(K.jp){K.jp=0;q.jb=8}
-if(q.jb>0&&p.coy>0){p.vy=q.mas>0?-17:-12.8;p.on=0;p.coy=0;q.jb=0;p.jm=1;sfx(q.mas>0?'jmpM':'jmp');burst(p.x,GY-2,'rgba(255,255,255,.85)',6,2.8,3)}
-if(p.jm&&!K.j&&p.vy<-4)p.vy=-4;if(p.vy>=0)p.jm=0;
-p.vy+=.6;const pyb=p.y+R,pvy=p.vy;p.y+=p.vy;p.on=0;
-for(const b of q.bl)if(!b.d&&ov(box(),b)){if(imm){bk(b);continue}if(p.vy>0){p.y=b.y-R;p.vy=0;p.on=1}else{p.y=b.y+b.h+R;p.vy=0}}
-for(const l of q.pl)if(p.vy>=0&&pyb<=l.y+3&&p.y+R>=l.y&&p.x+R>l.x&&p.x-R<l.x+l.w){p.y=l.y-R;p.vy=0;p.on=1}
-const onL=q.lv.some(l=>p.x>l[0]+6&&p.x<l[0]+l[1]-6);
-if(p.y+R>=GY&&(!onL||imm)){p.y=GY-R;p.vy=0;p.on=1}
-if(p.on)q.cb=0;if(p.on&&!p.wo&&pvy>5)p.sq=8;p.wo=p.on;if(p.sq>0)p.sq--;
-if(p.y>GY+40){burst(p.x,GY,'#ff6b00',16,5,4.5);return die()}
+        <!-- Métricas rápidas -->
+        <div class="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-1 gap-3 shrink-0 lg:w-60">
+          <div class="rounded-2xl bg-slate-950/80 border border-slate-800 px-4 py-3 flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Juegos</span>
+            <span id="statTotalGames" class="font-display font-bold text-lg text-white">8</span>
+          </div>
+          <div class="rounded-2xl bg-slate-950/80 border border-slate-800 px-4 py-3 flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Con URL</span>
+            <span id="statLinkedGames" class="font-display font-bold text-lg text-cyan-400">0/8</span>
+          </div>
+          <div class="col-span-2 sm:col-span-1 lg:col-span-1 rounded-2xl bg-slate-950/80 border border-slate-800 px-4 py-3 flex items-center justify-between">
+            <span class="text-xs text-slate-400 font-medium">Guardado</span>
+            <span class="font-display font-bold text-xs text-lime-400 uppercase tracking-wider">localStorage</span>
+          </div>
+        </div>
+      </div>
+    </section>
 
-const pb={x:p.x-R+3,y:p.y-R+3,w:2*R-6,h:2*R-6};
-const mr=S.pas.mag*50;for(const c of q.co){if(c.d)continue;if(mr){const ax=p.x-c.x,ay=p.y-c.y;if(ax*ax+ay*ay<(mr+30)*(mr+30)){c.x+=ax*.18;c.y+=ay*.18}}if(Math.abs(c.x-p.x)<R+10&&Math.abs(c.y-p.y)<R+10){c.d=1;q.cn++;tone(988,1480,.08,'sine',.08);burst(c.x,c.y,'#ffd60a',5,2.8,3)}}
-for(const sp of q.spr)if(ov(pb,sp)&&p.vy>=0){p.vy=-17;p.jm=0;p.on=0;sp.sq=10;sfx('jmpM');burst(sp.x+18,sp.y,'#4cc9f0',8,3,3.5)}
-for(const sh of q.sh)if(!sh.d&&ov(pb,sh)){sh.d=1;q.shield=1;sfx('pow');floatTxt(sh.x,sh.y-12,'🛡️ ¡ESCUDO!','#72efdd');burst(sh.x+12,sh.y+12,'#72efdd',12,4,4)}
-for(const s of q.sp)if(!s.d&&ov(pb,{x:s.x+4,y:GY-18,w:s.w-8,h:18})){if(imm){s.d=1;sfx('brk');burst(s.x+s.w/2,GY-10,'#cbd5e1',10,4,3.5)}else return die()}
-for(const a of q.al)if(!a.d&&ov(pb,a)){a.d=1;q.alt=300;sfx('aloe');flash=.28;flashCol='#52b788';burst(a.x+15,a.y+17,'#74c69d',15,5,4.2);floatTxt(a.x+15,a.y-10,'🌿 ¡ALOE VELOZ!','#95d5b2')}
-for(const e of q.en){if(e.d||Math.abs(e.x-p.x)>900)continue;upE(e);
-if(ov(pb,{x:e.x+3,y:e.y+3,w:e.w-6,h:e.h-6})){if(imm)kill(e);else if(p.vy>0&&p.y<e.y+e.h*.3){kill(e,1);p.vy=K.j?-12.5:-8.5}else return die()}}
-const b=q.B;if(b&&b.hp>0){upB(b);if(ov(pb,b)){if(imm)hitB(b);else if(p.vy>0&&p.y<b.y+b.h*.35){hitB(b);p.vy=K.j?-13:-11}else return die()}}
-for(const o of q.pr){o.x+=o.vx;o.y+=o.vy;o.l++;if(ov(pb,{x:o.x-6,y:o.y-6,w:12,h:12})){o.l=999;burst(o.x,o.y,'#ff6d00',8,3.2,3.2);if(!imm)return die()}}
-q.pr=q.pr.filter(o=>o.l<300);
+    <!-- Filtros y búsqueda -->
+    <section class="space-y-4">
+      <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <!-- Categorías -->
+        <div id="categoryFilters" class="flex flex-wrap items-center gap-2">
+          <button type="button" data-category="Todos" class="cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-cyan-400 text-slate-950">
+            Todos
+          </button>
+          <button type="button" data-category="Acción" class="cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-[#111522] text-slate-300 hover:bg-slate-800 border border-slate-800">
+            Acción
+          </button>
+          <button type="button" data-category="Incremental" class="cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-[#111522] text-slate-300 hover:bg-slate-800 border border-slate-800">
+            Incremental
+          </button>
+          <button type="button" data-category="Arcade / Lab" class="cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-[#111522] text-slate-300 hover:bg-slate-800 border border-slate-800">
+            Arcade / Lab
+          </button>
+        </div>
 
-q.cam=Math.max(0,p.x-220);if(q.mode=='s')q.cam=Math.min(q.cam,q.L-W+120);
-if(q.mode=='i'){if(p.x+1100>q.genX)q.genX=gen(q.genX,q.genX+700);if(q.t%120==0){const c=q.cam-300;q.bl=q.bl.filter(o=>o.x>c);q.sp=q.sp.filter(o=>o.x>c);q.en=q.en.filter(o=>o.x>c);q.al=q.al.filter(o=>o.x>c);q.co=q.co.filter(o=>o.x>c);q.pl=q.pl.filter(o=>o.x>c);q.spr=q.spr.filter(o=>o.x>c);q.sh=q.sh.filter(o=>o.x>c);q.lv=q.lv.filter(o=>o[0]>c)}}
-else if(q.fl&&p.x>=q.L-10)win()}
+        <!-- Buscador -->
+        <div class="relative w-full md:w-80">
+          <input
+            id="searchInput"
+            type="search"
+            placeholder="Buscar juego, etiqueta o mecánica..."
+            class="w-full rounded-xl bg-[#111522] border border-slate-800 focus:border-cyan-400 focus:outline-none px-4 py-2.5 text-sm text-white placeholder-slate-500 transition"
+          />
+        </div>
+      </div>
+    </section>
 
-function upE(e){const q=G,p=q.p,sp=SPD[q.d];e.t++;const dr=Math.sign(p.x-e.x)||1;
-if(e.k=='sq'){if(Math.abs(e.x-e.hx)>70)e.vx=-Math.sign(e.x-e.hx)*Math.abs(e.vx);e.x+=e.vx}
-else if(e.k=='tri'){e.vy+=.6;e.y+=e.vy;if(e.y>=GY-e.h){e.y=GY-e.h;e.vy=0;if(e.t%70==0)e.vy=-10-q.d}if(Math.abs(p.x-e.x)<320)e.x+=dr*.7*sp}
-else if(e.k=='pen'){if(e.t%Math.round(120/sp)==0&&Math.abs(p.x-e.x)<520)q.pr.push({x:e.x+15,y:e.y+12,vx:dr*3.2*sp,vy:0,l:0})}
-else if(e.k=='rom'){e.x=e.hx+Math.sin(e.t/40)*90;e.y=e.y0+Math.sin(e.t/25)*25}
-else if(e.k=='hex'){if(Math.abs(p.x-e.x)<320)e.ch=1;if(e.ch)e.x+=dr*3.2*sp}}
+  <!-- Cuadrícula de juegos -->
+    <section aria-label="Catálogo de juegos">
+      <div id="gamesGrid" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-5"></div>
+    </section>
 
-function upB(b){const q=G,p=q.p,sp=SPD[q.d]*(b.hp<=b.mhp/2?1.3:1);if(!b.act){if(p.x>b.x-650)b.act=1;else return}
-b.t++;if(b.inv>0)b.inv--;const dr=Math.sign(p.x-b.x)||1;
-b.vy+=.6;b.y+=b.vy;if(b.y>=GY-b.h){if(b.vy>4){shake=8;q.pr.push({x:b.x+40,y:GY-8,vx:-4*sp,vy:0,l:0},{x:b.x+40,y:GY-8,vx:4*sp,vy:0,l:0});tone(90,40,.2,'sawtooth',.1)}b.y=GY-b.h;b.vy=0}
-if(b.tel>0){b.tel--;b.x+=(Math.random()-.5)*3.5;if(!b.tel)b.chg=40}
-else if(b.chg>0){b.chg--;b.x+=b.cd*5*sp}
-else b.x+=dr*.9*sp;
-b.x=Math.max(q.L-900,Math.min(q.L-60-b.w,b.x));
-if(b.t%(b.hp<=b.mhp/2?70:90)==0&&!b.tel&&!b.chg){const a=(b.n=(b.n||0)+1)%(q.sec+1);
-if(a==0){b.vy=-14;tone(160,340,.16,'sawtooth',.075)}
-else if(a==1){const n=q.sec;tone(320,140,.14,'square',.075);for(let i=0;i<n;i++)q.pr.push({x:b.x+40,y:b.y+40,vx:dr*3.5*sp,vy:(i-(n-1)/2)*1.4,l:0})}
-else{b.tel=28;b.cd=dr;tone(120,260,.26,'sawtooth',.085);floatTxt(b.x+40,b.y-30,'⚡ ¡CARGA!','#ff595e')}}}
+    <!-- Sin resultados -->
+    <div id="emptyResults" class="hidden text-center py-16 px-6 rounded-3xl bg-[#111522]/70 border border-slate-800">
+      <p class="font-display text-lg font-bold text-white mb-1">Sin coincidencias</p>
+      <p class="text-sm text-slate-400 mb-4">Intenta buscar con otra palabra o vuelve a mostrar todos los juegos.</p>
+      <button id="btnClearFilters" type="button" class="px-4 py-2.5 rounded-xl bg-cyan-400 text-slate-950 font-bold text-xs sm:text-sm hover:bg-cyan-300 transition">
+        Restablecer filtros
+      </button>
+    </div>
+  </main>
 
-function win(){sfx('win');const q=G,m=MU[q.d],sc=Math.round((q.kills*100+q.bo+500+Math.max(0,1000-(q.att-1)*150))*m),cc=Math.round(q.cn*3*m),co=Math.round((20+q.n*6)*(q.boss?2:1)*m)+cc,k=q.n+'_'+q.d,nw=sc>(S.best[k]||0);
-if(nw)S.best[k]=sc;const fr=q.ct?Math.min(1,q.cn/q.ct):1,st=1+(q.att==1?1:0)+(fr>=.8?1:0),os=S.stars[k]||0,bs=st>os?(st-os)*25:0;if(st>os)S.stars[k]=st;S.coins+=co+bs;S.done[q.n]=1;save();
-show(`<h2>🏁 ¡Etapa ${q.n} completada!</h2><div>Dificultad: ${D[q.d]} (×${m})</div><div>Puntaje: <b>${sc}</b> ${nw?'🆕 ¡Récord!':'(mejor: '+S.best[k]+')'}</div><div>Enemigos vencidos: ${q.kills} · Intentos: ${q.att}</div><div>Combos: +${q.bo} · Monedas recogidas: ${q.cn}</div><div style="font-size:30px">${'⭐'.repeat(st)}${'☆'.repeat(3-st)}</div><small>⭐ completar · ⭐ sin morir · ⭐ 80% de monedas</small><div>🪙 +${co+bs}${bs?' (+'+bs+' por estrellas)':''}</div>`+(q.n<30?`<button class="m" onclick="play('s',${q.n+1},0,1)">Siguiente etapa ▶</button>`:'<div>🎉 ¡Terminaste el juego!</div>')+`<button class="m" onclick="play('s',${q.n},${q.d},1)">Repetir</button><button class="m" onclick="story()">Etapas</button>`)}
-function endI(){const q=G,sc=Math.floor(q.p.x/10)+q.kills*50+q.bo,co=Math.floor(sc/12)+q.cn*3,nw=sc>S.inf;if(nw)S.inf=sc;S.coins+=co;save();
-show(`<h2>💀 Fin de la carrera</h2><div>Puntaje: <b>${sc}</b> ${nw?'🆕 ¡Récord!':''}</div><div>Récord: ${S.inf}</div><div>Monedas recogidas: ${q.cn}</div><div>🪙 +${co}</div><button class="m" onclick="play('i',0,0,1)">Reintentar</button><button class="m" onclick="menu()">Menú</button>`)}
-/* DIBUJO Y AMBIENTE */
-function poly(x,y,r,n,c,rot=0){g.save();g.translate(x,y);g.rotate(rot);
-g.fillStyle='rgba(0,0,0,.25)';g.beginPath();for(let i=0;i<n;i++){const a=i*6.2832/n-1.5708;g.lineTo(Math.cos(a)*r+2,Math.sin(a)*r+3)}g.closePath();g.fill();
-g.fillStyle=c;g.beginPath();for(let i=0;i<n;i++){const a=i*6.2832/n-1.5708;g.lineTo(Math.cos(a)*r,Math.sin(a)*r)}g.closePath();g.fill();
-g.strokeStyle='rgba(255,255,255,.45)';g.lineWidth=2;g.stroke();g.restore()}
+  <!-- Footer -->
+  <footer class="border-t border-slate-800/80 bg-[#06080d] py-8 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4">
+      <div class="text-center sm:text-left">
+        <p class="font-display font-bold text-sm text-white">
+          urgye.fun <span class="text-slate-500 font-normal">•</span> <span class="text-cyan-400">panchito-el-gamer</span>
+        </p>
+        <p class="text-xs text-slate-400 mt-0.5">
+          Sitio indie de panchito-el-gamer para juegos en HTML, HTML5 Canvas y JavaScript.
+        </p>
+      </div>
 
-function ball(x,y,r,f,glow,rot=0){const e=S.eq,c=e.find(i=>COL[i]&&i!='cor');g.save();g.translate(x,y);
-if(glow){g.fillStyle='rgba(255,225,60,.32)';g.beginPath();g.arc(0,0,r*1.85,0,7);g.fill()}
-g.scale(f,1);
-if(e.includes('capa')){const fl=Math.sin(Date.now()/75)*r*.28;g.fillStyle='#c9184a';g.beginPath();g.moveTo(-r*.5,-r*.45);g.quadraticCurveTo(-r*1.6,-r*.1,-r*2.35,r*.8+fl);g.lineTo(-r*.2,r*.7);g.fill()}
-const bc=COL[c]||'#e53935';g.fillStyle=bc;g.beginPath();g.arc(0,0,r,0,7);g.fill();
-g.fillStyle='rgba(0,0,0,.2)';g.beginPath();g.arc(r*.14,r*.18,r*.88,0,7);g.fill();
-g.fillStyle=bc;g.beginPath();g.arc(-r*.05,-r*.05,r*.9,0,7);g.fill();
-g.save();g.rotate(rot);g.strokeStyle='rgba(255,255,255,.2)';g.lineWidth=1.5;g.beginPath();g.arc(0,0,r*.6,0,2.2);g.stroke();g.restore();
-g.fillStyle='rgba(255,255,255,.42)';g.beginPath();g.arc(-r*.34,-r*.38,r*.26,0,7);g.fill();
-g.fillStyle='#fff';g.beginPath();g.arc(r*.35,-r*.2,r*.3,0,7);g.fill();g.fillStyle='#0d0d12';g.beginPath();g.arc(r*.46,-r*.2,r*.15,0,7);g.fill();
-g.fillStyle='#fff';g.beginPath();g.arc(r*.51,-r*.26,r*.06,0,7);g.fill();
-const u=r/16;
-if(e.includes('gaf')){g.fillStyle='#090d16';g.fillRect(-2*u,-8.5*u,17*u,7.5*u);g.strokeStyle='#ffd60a';g.lineWidth=1;g.strokeRect(-2*u,-8.5*u,17*u,7.5*u);g.fillStyle='rgba(114,239,221,.45)';g.fillRect(0,-7*u,6*u,2*u)}
-if(e.includes('hat')){g.fillStyle='#1c1d24';g.fillRect(-15*u,-r-2*u,30*u,5*u);g.fillRect(-8.5*u,-r-16.5*u,17*u,15*u);g.fillStyle='#ff2a2a';g.fillRect(-8.5*u,-r-5.5*u,17*u,3.5*u)}
-if(e.includes('cuer')){g.fillStyle='#9b001c';for(const s of[-1,1]){g.beginPath();g.moveTo(s*4*u,-r+2*u);g.lineTo(s*15*u,-r-13*u);g.lineTo(s*12*u,-r+6*u);g.fill()}}
-if(e.includes('cor')){g.fillStyle='#ffd700';g.beginPath();g.moveTo(-10*u,-r+1);g.lineTo(-10*u,-r-12*u);g.lineTo(-5*u,-r-5*u);g.lineTo(0,-r-15*u);g.lineTo(5*u,-r-5*u);g.lineTo(10*u,-r-12*u);g.lineTo(10*u,-r+1);g.fill();g.fillStyle='#ff2a2a';g.beginPath();g.arc(0,-r-4*u,2.3*u,0,7);g.fill()}
-g.restore()}
+      <div class="flex flex-wrap items-center justify-center gap-2.5">
+        <button
+          id="btnFooterExport"
+          type="button"
+          class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-100 border border-slate-700 transition"
+        >
+          Exportar HTML
+        </button>
+        <button
+          id="btnResetCatalog"
+          type="button"
+          class="px-3.5 py-2 rounded-xl text-xs font-semibold bg-rose-950/50 hover:bg-rose-900/60 text-rose-300 border border-rose-800/60 transition"
+        >
+          Restablecer catálogo
+        </button>
+      </div>
+    </div>
+  </footer>
 
-const SKY=[
-['#1d8fe1','#90e0ef','#38b000','#2b9348','#5c3a21'],
-['#e85d04','#ffba08','#e07a5f','#9c4221','#43200e'],
-['#09071a','#2b1b54','#8338ec','#3a0ca3','#190c2e']
-],EC={sq:'#a855f7',tri:'#f97316',pen:'#14b8a6',rom:'#3b82f6',hex:'#ef4444'},EN={sq:[4,.785],tri:[3,0],pen:[5,0],rom:[4,0],hex:[6,0]};
+  <!-- Modal Lanzador / Jugador -->
+  <div id="playModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-3 sm:p-6">
+    <div class="w-full max-w-5xl rounded-3xl bg-[#111522] border border-slate-700/90 shadow-2xl overflow-hidden flex flex-col max-h-[92vh]">
+      <div class="px-5 py-4 border-b border-slate-800 flex items-center justify-between gap-3 bg-[#0d1019]">
+        <div class="flex items-center gap-3 min-w-0">
+          <span id="playModalEmoji" class="text-2xl shrink-0">🎮</span>
+          <div class="min-w-0">
+            <h2 id="playModalTitle" class="font-display font-bold text-lg text-white truncate">Juego</h2>
+            <p id="playModalUrlText" class="text-xs text-slate-400 truncate"></p>
+          </div>
+        </div>
 
-function eye(x,y,s){g.fillStyle='#fff';g.fillRect(x-s*.5,y-s*.3,s*.36,s*.36);g.fillRect(x+s*.14,y-s*.3,s*.36,s*.36);g.fillStyle='#0d0d12';g.fillRect(x-s*.4,y-s*.2,s*.16,s*.2);g.fillRect(x+s*.24,y-s*.2,s*.16,s*.2)}
+        <div class="flex items-center gap-2 shrink-0">
+          <a
+            id="playModalExternal"
+            href="#"
+            target="_blank"
+            rel="noopener noreferrer"
+            class="px-3 py-1.5 rounded-xl text-xs font-semibold bg-cyan-400 hover:bg-cyan-300 text-slate-950 transition"
+          >
+            Abrir en pestaña
+          </a>
+          <button
+            id="btnClosePlayModal"
+            type="button"
+            class="w-9 h-9 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 flex items-center justify-center font-bold transition"
+            aria-label="Cerrar lanzador"
+          >
+            ✕
+          </button>
+        </div>
+      </div>
 
-function bg(sec,cam,tm=0){const c=SKY[sec-1],gr=g.createLinearGradient(0,0,0,GY);gr.addColorStop(0,c[0]);gr.addColorStop(1,c[1]);g.fillStyle=gr;g.fillRect(0,0,W,H);
+<div class="flex-1 bg-[#07090e] relative min-h-[340px] sm:min-h-[460px] flex flex-col">
+        <iframe
+          id="playIframe"
+          src=""
+          title="Vista previa del juego"
+          class="w-full flex-1 border-0 bg-black hidden"
+          allowfullscreen
+        ></iframe>
 
-if(sec==1){g.fillStyle='rgba(255,214,10,.22)';g.beginPath();g.arc(670,68,68,0,7);g.fill();
-g.fillStyle='#ffd60a';g.beginPath();g.arc(670,68,34,0,7);g.fill();g.fillStyle='#fff9c4';g.beginPath();g.arc(670,68,24,0,7);g.fill()}
-else if(sec==2){g.fillStyle='rgba(255,123,0,.25)';g.beginPath();g.arc(640,145,95,0,7);g.fill();
-g.fillStyle='#ff9f1c';g.beginPath();g.arc(640,145,54,0,7);g.fill()}
-else{g.fillStyle='#fff';for(let i=0;i<32;i++){const sx=(i*137)%W,sy=(i*73)%220;g.globalAlpha=.35+.65*Math.abs(Math.sin(tm/28+i));g.fillRect(sx,sy,2,2)}g.globalAlpha=1;
-g.fillStyle='#f8f9fa';g.beginPath();g.arc(670,65,22,0,7);g.fill();g.fillStyle=c[0];g.beginPath();g.arc(679,58,18,0,7);g.fill()}
+        <div id="playFallbackBox" class="flex-1 p-6 sm:p-8 flex flex-col items-center justify-center text-center max-w-xl mx-auto space-y-4">
+          <div class="w-14 h-14 rounded-2xl bg-violet-500/15 border border-violet-400/30 flex items-center justify-center text-2xl">
+            🕹️
+          </div>
+          <h3 class="font-display font-bold text-xl text-white">Listo para lanzar</h3>
+          <p id="playFallbackDesc" class="text-sm text-slate-300 leading-relaxed"></p>
+          <div class="w-full rounded-2xl bg-slate-900/90 border border-slate-800 p-4 text-left space-y-1">
+            <p class="text-[11px] uppercase tracking-wider font-semibold text-cyan-400">Controles</p>
+            <p id="playFallbackControls" class="text-xs sm:text-sm text-slate-300"></p>
+          </div>
+          <p class="text-xs text-slate-400">
+            Si el juego no carga dentro del marco (por políticas de iframe del host), usa <strong>Abrir en pestaña</strong> o guarda su URL en <strong>Configurar URL</strong>.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
 
-if(sec<3){g.fillStyle=sec==1?'rgba(255,255,255,.82)':'rgba(255,214,165,.48)';
-for(let i=0;i<6;i++){const cx=((i*210-(cam*.13+tm*.28))%1260+1260)%1260-120,cy=40+(i%3)*26;
-g.beginPath();g.arc(cx,cy,18,0,7);g.arc(cx+18,cy-7,22,0,7);g.arc(cx+38,cy,17,0,7);g.fill()}}
+  <!-- Modal Configurar URL de un juego -->
+  <div id="urlModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="w-full max-w-md rounded-3xl bg-[#111522] border border-slate-700/90 shadow-2xl p-6 space-y-5">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-cyan-400">Configurar URL</span>
+          <h2 id="urlModalTitle" class="font-display font-bold text-xl text-white mt-0.5">Juego</h2>
+        </div>
+        <button id="btnCloseUrlModal" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">
+          ✕
+        </button>
+      </div>
 
-g.fillStyle=sec==1?'rgba(29,112,162,.28)':(sec==2?'rgba(154,52,18,.32)':'rgba(114,9,183,.32)');
-for(let i=-1;i<7;i++){const x=i*220-(cam*.18%220);g.beginPath();g.moveTo(x,GY);g.lineTo(x+110,GY-145-(i%2)*35);g.lineTo(x+220,GY);g.fill()}
-g.fillStyle=sec==1?'rgba(43,147,72,.38)':(sec==2?'rgba(127,41,14,.42)':'rgba(72,12,168,.45)');
-for(let i=-1;i<8;i++){const x=i*160-(cam*.35%160);g.beginPath();g.moveTo(x,GY);g.lineTo(x+80,GY-95-(i&1)*35);g.lineTo(x+160,GY);g.fill()}
+      <form id="urlForm" class="space-y-4">
+        <div>
+          <label for="gameUrlInput" class="block text-xs font-semibold text-slate-300 mb-1.5">
+            Enlace del juego (Vercel, GitHub Pages o ruta local)
+          </label>
+          <input
+            id="gameUrlInput"
+            type="text"
+            placeholder="https://... o /juegos/super2/"
+            class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2.5 text-sm text-white placeholder-slate-500"
+          />
+          <p class="text-[11px] text-slate-400 mt-1.5">
+            Se guarda automáticamente en este navegador con <code>localStorage</code>.
+          </p>
+        </div>
 
-for(let i=0;i<12;i++){const px=((i*97-cam*.55+Math.sin(tm/26+i)*24)%W+W)%W,py=130+((i*57+Math.cos(tm/22+i)*18)%180);
-g.fillStyle=sec==3?'rgba(155,246,255,.78)':(sec==2?'rgba(255,209,102,.68)':'rgba(255,255,255,.65)');
-g.fillRect(px,py,3,3)}
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="btnCancelUrlModal" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 transition">
+            Guardar URL
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-g.fillStyle=c[4];g.fillRect(0,GY,W,H-GY);
-g.fillStyle='rgba(0,0,0,.22)';for(let i=-1;i<18;i++){const rx=i*52-(cam%52);g.fillRect(rx+10,GY+18+(i%3)*14,18,8)}
-g.fillStyle=c[3];g.fillRect(0,GY,W,12);g.fillStyle=c[2];g.fillRect(0,GY,W,6);
-for(let i=-1;i<34;i++){const gx=i*24-(cam%24),sw=Math.sin(tm/12+i)*3;g.beginPath();g.moveTo(gx,GY);g.lineTo(gx+4+sw,GY-7);g.lineTo(gx+9,GY);g.fill();
-if(sec==1&&i%6==0){g.fillStyle=i%12==0?'#ff595e':'#ffd60a';g.fillRect(gx+2+sw,GY-10,4,4);g.fillStyle=c[2]}}}
+  <!-- Modal Agregar juego -->
+  <div id="addGameModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="w-full max-w-lg rounded-3xl bg-[#111522] border border-slate-700/90 shadow-2xl p-6 space-y-5 max-h-[90vh] overflow-y-auto custom-scroll">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-lime-400">Nuevo título</span>
+          <h2 class="font-display font-bold text-xl text-white mt-0.5">Agregar juego a urgye.fun</h2>
+        </div>
+        <button id="btnCloseAddModal" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">
+          ✕
+        </button>
+      </div>
 
-function draw(){g.clearRect(0,0,W,H);const q=G,now=Date.now()/16;
-if(!q){bg(1,now*.65,now);const t=Date.now()/500;ball(400,GY-16-Math.abs(Math.sin(t))*90,16,1,1,now*.08);return}
-const cam=q.cam,p=q.p,X=x=>x-cam;
-g.save();if(shake>0)g.translate((Math.random()-.5)*shake,(Math.random()-.5)*shake);
-bg(q.sec,cam,q.t);
+      <form id="addGameForm" class="space-y-4">
+        <div class="grid grid-cols-1 sm:grid-cols-3 gap-3">
+          <div class="sm:col-span-2">
+            <label for="newTitle" class="block text-xs font-semibold text-slate-300 mb-1">Nombre del juego *</label>
+            <input id="newTitle" type="text" required placeholder="Ej. NovaTech Runner" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label for="newEmoji" class="block text-xs font-semibold text-slate-300 mb-1">Emoji</label>
+            <input id="newEmoji" type="text" value="🎮" maxlength="6" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white text-center" />
+          </div>
+        </div>
 
-const shD=Math.max(0,1-(GY-16-p.y)/180);
-if(shD>0){g.fillStyle=`rgba(0,0,0,${.32*shD})`;g.beginPath();g.ellipse(X(p.x),GY+2,(q.mas>0?20:16)*(.5+.5*shD),4*shD,0,0,7);g.fill()}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="newCategory" class="block text-xs font-semibold text-slate-300 mb-1">Categoría</label>
+            <select id="newCategory" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white">
+              <option value="Acción">Acción</option>
+              <option value="Incremental">Incremental</option>
+              <option value="Arcade / Lab">Arcade / Lab</option>
+            </select>
+          </div>
+          <div>
+            <label for="newBadge" class="block text-xs font-semibold text-slate-300 mb-1">Etiqueta corta</label>
+            <input id="newBadge" type="text" placeholder="Ej. HTML5 Canvas" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white" />
+          </div>
+        </div>
 
-for(const l of q.lv){if(l[0]+l[1]<cam||l[0]>cam+W)continue;
-g.fillStyle='#ff5400';g.fillRect(X(l[0]),GY,l[1],H-GY);
-g.fillStyle='#ffd60a';for(let i=0;i<l[1];i+=14)g.fillRect(X(l[0])+i,GY+Math.sin(q.t/6.5+i)*3+2,9,4)}
+        <div>
+          <label for="newDescription" class="block text-xs font-semibold text-slate-300 mb-1">Descripción *</label>
+          <textarea id="newDescription" rows="2" required placeholder="Describe de qué trata el juego..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white"></textarea>
+        </div>
 
-for(const b of q.bl){if(b.d||b.x<cam-80||b.x>cam+W)continue;
-g.fillStyle='#b07d44';g.fillRect(X(b.x),b.y,b.w,b.h);g.strokeStyle='#432818';g.lineWidth=2;
-for(let i=0;i<b.w/40;i++)for(let j=0;j<b.h/40;j++){const bx=X(b.x)+i*40,by=b.y+j*40;
-g.strokeRect(bx+1,by+1,38,38);g.beginPath();g.moveTo(bx+6,by+6);g.lineTo(bx+34,by+34);g.stroke()}}
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <div>
+            <label for="newTags" class="block text-xs font-semibold text-slate-300 mb-1">Tags (separados por coma)</label>
+            <input id="newTags" type="text" placeholder="Canvas, Móvil, JS" class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white" />
+          </div>
+          <div>
+            <label for="newUrl" class="block text-xs font-semibold text-slate-300 mb-1">URL del juego</label>
+            <input id="newUrl" type="text" placeholder="https://..." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white" />
+          </div>
+        </div>
 
-for(const l of q.pl){if(l.x<cam-140||l.x>cam+W)continue;g.fillStyle='#8d5a2b';g.fillRect(X(l.x),l.y,l.w,l.h);g.fillStyle='#c68b59';g.fillRect(X(l.x),l.y,l.w,4);g.fillStyle='#432818';for(let i=12;i<l.w;i+=24)g.fillRect(X(l.x)+i,l.y+4,2,l.h-4)}
-for(const s of q.spr){if(s.x<cam-60||s.x>cam+W)continue;const k=s.sq>0?(s.sq--,6):14;g.fillStyle='#4cc9f0';g.fillRect(X(s.x),GY-k,s.w,4);g.fillStyle='#94a3b8';g.fillRect(X(s.x)+6,GY-k+4,4,k-4);g.fillRect(X(s.x)+s.w-10,GY-k+4,4,k-4);g.fillStyle='#e63946';g.fillRect(X(s.x),GY-3,s.w,3)}
-for(const s of q.sh){if(s.d||s.x<cam-40||s.x>cam+W)continue;const y=s.y+Math.sin(q.t/10)*3,x=X(s.x);g.fillStyle='rgba(114,239,221,.25)';g.beginPath();g.arc(x+12,y+12,17,0,7);g.fill();g.fillStyle='#72efdd';g.beginPath();g.moveTo(x+12,y);g.lineTo(x+22,y+5);g.lineTo(x+19,y+19);g.lineTo(x+12,y+24);g.lineTo(x+5,y+19);g.lineTo(x+2,y+5);g.closePath();g.fill();g.strokeStyle='#fff';g.lineWidth=2;g.stroke()}
-for(const s of q.sp){if(s.d||s.x<cam-80||s.x>cam+W)continue;
-for(let i=0;i<s.w;i+=20){g.fillStyle='#94a3b8';g.beginPath();g.moveTo(X(s.x)+i,GY);g.lineTo(X(s.x)+i+10,GY-23);g.lineTo(X(s.x)+i+20,GY);g.fill();
-g.fillStyle='#fff';g.beginPath();g.moveTo(X(s.x)+i+10,GY-23);g.lineTo(X(s.x)+i+13.5,GY);g.lineTo(X(s.x)+i+10,GY);g.fill()}}
+        <div>
+          <label for="newControls" class="block text-xs font-semibold text-slate-300 mb-1">Controles</label>
+          <input id="newControls" type="text" placeholder="Móvil: Táctil. PC: Flechas y Espacio." class="w-full rounded-xl bg-slate-950 border border-slate-700 focus:border-cyan-400 focus:outline-none px-3.5 py-2 text-sm text-white" />
+        </div>
 
-for(const a of q.al){if(a.d||a.x<cam-80||a.x>cam+W)continue;
-g.fillStyle='rgba(116,198,157,.24)';g.beginPath();g.arc(X(a.x)+15,GY-16,26,0,7);g.fill();
-g.fillStyle='#2d6a4f';for(const[dx,h]of[[-8,30],[0,36],[8,30]]){g.beginPath();g.moveTo(X(a.x)+15+dx-6,GY);g.lineTo(X(a.x)+15+dx*1.6,GY-h);g.lineTo(X(a.x)+15+dx+6,GY);g.fill()}
-g.fillStyle='#95d5b2';g.beginPath();g.moveTo(X(a.x)+12,GY);g.lineTo(X(a.x)+15,GY-35);g.lineTo(X(a.x)+17,GY);g.fill()}
+        <div class="flex items-center justify-end gap-2 pt-2">
+          <button type="button" id="btnCancelAddModal" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 transition">
+            Cancelar
+          </button>
+          <button type="submit" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-lime-400 hover:bg-lime-300 text-slate-950 transition">
+            Guardar juego
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
 
-g.strokeStyle='#b8860b';g.lineWidth=2;for(const c of q.co){if(c.d||c.x<cam-20||c.x>cam+W+20)continue;
-const cy=c.y+Math.sin(q.t/9+c.x)*2.5;g.fillStyle='#ffd60a';g.beginPath();g.arc(X(c.x),cy,7.5,0,7);g.fill();g.stroke();
-g.fillStyle='#fff3b0';g.fillRect(X(c.x)-1.5,cy-4,3,8)}
+ <!-- Modal Exportar HTML -->
+  <div id="exportModal" class="fixed inset-0 z-50 hidden items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+    <div class="w-full max-w-3xl rounded-3xl bg-[#111522] border border-slate-700/90 shadow-2xl p-6 space-y-4 max-h-[90vh] flex flex-col">
+      <div class="flex items-start justify-between gap-3">
+        <div>
+          <span class="text-xs font-semibold uppercase tracking-wider text-violet-400">Listo para GitHub y Vercel</span>
+          <h2 class="font-display font-bold text-xl text-white mt-0.5">Exportar index.html actualizado</h2>
+        </div>
+        <button id="btnCloseExportModal" type="button" class="w-8 h-8 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-bold">
+          ✕
+        </button>
+      </div>
 
-if(q.L<1e8){g.fillStyle='#f8f9fa';g.fillRect(X(q.L),GY-124,5,124);g.fillStyle=q.fl?'#2ec4b6':'#6c757d';g.fillRect(X(q.L)+5,GY-124,44,28)}
+      <p class="text-xs sm:text-sm text-slate-300">
+        Incluye los juegos y URLs guardados actualmente en este navegador. Copia el código o descarga el archivo <code class="text-cyan-300">index.html</code> para subirlo a tu repositorio.
+      </p>
 
-for(const e of q.en){if(e.d||e.x<cam-80||e.x>cam+W)continue;const[n,r]=EN[e.k],cx=X(e.x)+e.w/2,cy=e.y+e.h/2;
-poly(cx,cy,e.w*.62,n,EC[e.k],r+(e.k=='rom'?Math.sin(e.t/12)*.2:0));eye(cx,cy,e.w*.6)}
+      <textarea
+        id="exportCodeArea"
+        readonly
+        class="w-full flex-1 min-h-[240px] rounded-2xl bg-slate-950 border border-slate-800 p-3.5 text-xs font-mono text-slate-200 focus:outline-none custom-scroll"
+      ></textarea>
 
-const b=q.B;if(b&&b.hp>0){const cx=X(b.x)+40,cy=b.y+40;
-if(b.inv%8<4)poly(cx,cy,52,3+q.sec,b.tel>0&&q.t%6<3?'#ffffff':['#9b111e','#d95d39','#5a189a'][q.sec-1],q.sec==1?.785:0);
-eye(cx,cy,48)}
+      <div class="flex flex-wrap items-center justify-end gap-2 pt-1">
+        <button type="button" id="btnDownloadHtml" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-semibold bg-slate-800 hover:bg-slate-700 text-white border border-slate-700 transition">
+          Descargar index.html
+        </button>
+        <button type="button" id="btnCopyHtml" class="px-4 py-2 rounded-xl text-xs sm:text-sm font-bold bg-cyan-400 hover:bg-cyan-300 text-slate-950 transition">
+          Copiar código
+        </button>
+      </div>
+    </div>
+  </div>
 
-for(const o of q.pr){g.fillStyle='#ffbe0b';g.beginPath();g.arc(X(o.x),o.y,7.5,0,7);g.fill();g.fillStyle='#ff5400';g.beginPath();g.arc(X(o.x),o.y,4,0,7);g.fill()}
+  <!-- Notificación flotante -->
+  <div id="toast" class="fixed bottom-5 right-5 z-[60] hidden items-center gap-2 rounded-2xl bg-slate-900 border border-slate-700 px-4 py-3 text-xs sm:text-sm font-medium text-white shadow-xl">
+    <span id="toastIcon">✅</span>
+    <span id="toastText"></span>
+  </div>
 
-for(const tr of TR){g.globalAlpha=Math.max(0,tr.l/tr.ml)*.5;g.fillStyle=tr.c;g.beginPath();g.arc(X(tr.x),tr.y,tr.r*(tr.l/tr.ml),0,7);g.fill()}
-for(const o of PT){g.globalAlpha=Math.max(0,o.l/o.ml);g.fillStyle=o.c;g.fillRect(X(o.x)-o.s/2,o.y-o.s/2,o.s,o.s)}
-g.globalAlpha=1;
+  <script>
+    /**
+     * Catálogo inicial de juegos de panchito-el-gamer en urgye.fun
+     */
+    const INITIAL_GAMES = [
+      {
+        id: 'stickman-warriors',
+        title: 'Stickman Warriors',
+        category: 'Acción',
+        badge: 'Combate 2D',
+        accent: 'cyan',
+        emoji: '🥷',
+        tags: ['HTML5 Canvas', 'Física 2D', 'JS'],
+        description: 'Duelos rápidos de stickmans con movimientos acrobáticos, golpes encadenados y acción directa en arena.',
+        controls: 'Móvil: Controles táctiles en pantalla. PC: WASD / Flechas y teclas de acción.',
+        url: 'https://stickmanwarriors.vercel.app/',
+      },
+      {
+        id: 'katana-zero-one',
+        title: 'Katana Zero-One',
+        category: 'Acción',
+        badge: 'Acción / Reflejos',
+        accent: 'violet',
+        emoji: '⚔️',
+        tags: ['HTML5 Canvas', 'Dash & Slash', 'JS'],
+        description: 'Acción de ritmo veloz con katana, dashes precisos y enemigos que exigen reflejos en cada sala.',
+        controls: 'Móvil: Deslizar y tocar. PC: Ratón para apuntar y Espacio / Click para atacar.',
+        url: 'https://katanas.vercel.app/',
+          
+      },
+      {
+        id: 'punch-hero-mobile',
+        title: 'Punch Hero Mobile',
+        category: 'Acción',
+        badge: 'Boxeo Táctil',
+        accent: 'lime',
+        emoji: '🥊',
+        tags: ['HTML5', 'Touch-First', 'Combate'],
+        description: 'Combates de boxeo pensados para jugar cómodo con el pulgar: esquiva, contraataca y noquea.',
+        controls: 'Móvil: Tocar y deslizar. PC: Flechas direccionales.',
+        url: 'https://box-teal-nu.vercel.app/',
+      },
+      {
+        id: 'zombies-defense-hordas',
+        title: 'Zombies Defense Hordas',
+        category: 'Acción',
+        badge: 'Supervivencia',
+        accent: 'lime',
+        emoji: '🧟',
+        tags: ['HTML5 Canvas', 'Oleadas', 'JS'],
+        description: 'Defiende tu posición frente a hordas de zombis cada vez más densas y mejora tu arsenal entre rondas.',
+        controls: 'Móvil: Apuntar y disparar en pantalla. PC: Ratón y teclas de apoyo.',
+        url: 'https://zombie-two-gamma.vercel.app/',
+      },
+      {
+        id: 'idle-miner-pro',
+        title: 'Idle Miner Pro',
+        category: 'Incremental',
+        badge: 'Minería Idle',
+        accent: 'lime',
+        emoji: '⛏️',
+        tags: ['HTML5', 'Incremental', 'Mejoras'],
+        description: 'Excava más profundo, mejora herramientas y automatiza la extracción para escalar tus ganancias.',
+        controls: 'Móvil y PC: Tocar o hacer clic para picar y comprar mejoras.',
+        url: 'https://mineria-livid.vercel.app/',
+      },
+      {
+        id: 'super2',
+        title: 'Súper2',
+        category: 'Incremental',
+        badge: 'Acción • HeroCleanSave • 11 Héroes',
+        accent: 'violet',
+        emoji: '⚡',
+        tags: ['HeroCleanSave', '11 Héroes', '6 Huevos', 'Fusión 3x', 'Renacimiento', 'localStorage'],
+        description: 'Acción e incremental HeroCleanSave con 11 héroes desde Chico Grafiti hasta Glitch Creador, 6 niveles de huevos, fusión de 3 estrellas y renacimiento de prestigio guardado en localStorage.',
+        controls: 'Móvil y PC: Juega la acción, abre 6 tipos de huevos, fusiona 3 iguales para subir estrellas y activa el renacimiento.',
+        url: 'https://super2-eight.vercel.app/',
+      },
+      {
+        id: 'laboratorio',
+        title: 'Laboratorio',
+        category: 'Arcade / Lab',
+        badge: 'Experimental',
+        accent: 'cyan',
+        emoji: '🧪',
+        tags: ['HTML5 Canvas', 'Prototipos', 'Sandbox'],
+        description: 'Espacio de pruebas de panchito-el-gamer para experimentar físicas, mecánicas y prototipos jugables.',
+        controls: 'Móvil y PC: Controles interactivos según el experimento.',
+        url: 'https://laboratorio-alpha-six.vercel.app/',
+      }
+    ];
 
-const R=q.mas>0?20:16,imm=q.inm>0||q.alt>0||q.dash>0||q.hurt>0;
-if(!q.dead||q.t%6<3){const sy=1+Math.min(.2,Math.abs(p.vy)/50)-(p.sq>0?.25*p.sq/8:0),fy=p.y+R;g.save();g.translate(X(p.x),fy);g.scale(1/sy,sy);g.translate(-X(p.x),-fy);ball(X(p.x),p.y,R,p.f,imm&&q.t%6<4,p.rot);g.restore();if(q.shield){g.strokeStyle='rgba(114,239,221,.9)';g.fillStyle='rgba(114,239,221,.16)';g.lineWidth=2.5;g.beginPath();g.arc(X(p.x),p.y,R+8,0,7);g.fill();g.stroke()}}
+    const STORAGE_KEY = 'urgye_fun_panchito_games_v2';
 
-g.textAlign='center';g.font='bold 15px system-ui,sans-serif';g.lineWidth=3.5;g.strokeStyle='rgba(0,0,0,.85)';
-for(const f of FT){g.globalAlpha=Math.min(1,f.l/20);g.fillStyle=f.c;g.strokeText(f.t,X(f.x),f.y);g.fillText(f.t,X(f.x),f.y)}
-g.globalAlpha=1;g.restore();
+    let games = loadGames();
+    let activeCategory = 'Todos';
+    let searchQuery = '';
+    let editingGameId = null;
 
-if(flash>0){g.globalAlpha=flash;g.fillStyle=flashCol;g.fillRect(0,0,W,H);g.globalAlpha=1}
+ // Elementos DOM
+    const gamesGrid = document.getElementById('gamesGrid');
+    const emptyResults = document.getElementById('emptyResults');
+    const searchInput = document.getElementById('searchInput');
+    const statTotalGames = document.getElementById('statTotalGames');
+    const statLinkedGames = document.getElementById('statLinkedGames');
 
-g.fillStyle=VG;g.fillRect(0,0,W,H);
-if(q.banner>0){g.globalAlpha=Math.min(1,q.banner/25);g.textAlign='center';g.font='bold 34px system-ui,sans-serif';g.lineWidth=5;g.strokeStyle='rgba(0,0,0,.8)';g.fillStyle=q.boss?'#ff595e':'#ffd60a';const t1=q.mode=='i'?(q.zone?'🌄 ZONA '+q.sec:'♾️ MODO INFINITO'):'ETAPA '+q.n+(q.boss?' · ¡JEFE!':'');g.strokeText(t1,W/2,150);g.fillText(t1,W/2,150);g.font='bold 16px system-ui,sans-serif';g.fillStyle='#fff';const t2=q.mode=='i'?'¡Llega lo más lejos que puedas!':(q.n==1&&q.att==1?'◀ ▶ mover · ⤒ saltar (mantén = más alto) · pisa enemigos':['Pradera Soleada','Cañón Atardecer','Noche Cósmica'][q.sec-1]);g.strokeText(t2,W/2,176);g.fillText(t2,W/2,176);g.globalAlpha=1}
-if(q.dead){g.textAlign='center';g.font='bold 22px system-ui,sans-serif';g.lineWidth=4;g.strokeStyle='rgba(0,0,0,.8)';g.fillStyle='#fff';const t=q.L<1e8?'💀 ¡Casi! Llegaste al '+Math.min(99,p.x/q.L*100|0)+'%':'💀 '+Math.floor(p.x/10)+' m';g.strokeText(t,W/2,205);g.fillText(t,W/2,205)}
-g.fillStyle='#fff';g.strokeStyle='rgba(0,0,0,.8)';g.lineWidth=3.5;g.font='bold 14px system-ui,sans-serif';g.textAlign='left';
-const sc=q.mode=='i'?Math.floor(p.x/10)+q.kills*50+q.bo:q.kills*100+q.bo;
-const tx=(s,x,y)=>{g.strokeText(s,x,y);g.fillText(s,x,y)};
-tx(q.mode=='i'?'♾️ Infinito':`Etapa ${q.n} · ${D[q.d]} · Intento ${q.att}`,12,21);
-tx(`Puntos: ${sc}   🪙 ${S.coins}  (+${q.cn} recogidas)`+(q.cb>1?`   🔥 x${q.cb}`:''),12,39);
-let tm=[];if(q.inm>0)tm.push('⭐ '+Math.ceil(q.inm/60)+'s');if(q.mas>0)tm.push('🦘 '+Math.ceil(q.mas/60)+'s');if(q.alt>0)tm.push('🌿 '+Math.ceil(q.alt/60)+'s');if(tm.length)tx(tm.join('  '),12,57);
-if(b&&b.hp>0){g.fillStyle='rgba(0,0,0,.75)';g.fillRect(200,46,400,11);g.fillStyle='#ff2a2a';g.fillRect(202,48,396*b.hp/b.mhp,7);
-if(p.x>q.L-1300){g.textAlign='center';g.fillStyle='#fff';tx('¡Derrota al jefe saltándole encima!',W/2,76)}}
-if(q.L<1e8){g.fillStyle='rgba(0,0,0,.45)';g.fillRect(200,H-10,400,5);g.fillStyle='#ffd60a';g.fillRect(200,H-10,400*Math.min(1,p.x/q.L),5)}
-$('ba').textContent=S.sel?(q.cd>0?Math.ceil(q.cd/60):{dash:'💨',inm:'⭐',mas:'🦘'}[S.sel]):'—'}
-/* ENTRADA */
-[['bl','l'],['br','r'],['bj','j'],['ba','a']].forEach(([i,k])=>{const e=$(i);
-e.onpointerdown=v=>{v.preventDefault();initAudio();K[k]=1;if(k=='j')K.jp=1;e.classList.add('act')};
-['pointerup','pointercancel','pointerleave'].forEach(n=>e['on'+n]=()=>{if(k!='a')K[k]=0;e.classList.remove('act')})});
-const KM={ArrowLeft:'l',a:'l',ArrowRight:'r',d:'r',ArrowUp:'j',w:'j',' ':'j',Shift:'a',e:'a',x:'a'};
-addEventListener('keydown',e=>{const k=KM[e.key];if(k){if(k=='j'&&!e.repeat)K.jp=1;K[k]=1;e.preventDefault()}});
-addEventListener('keyup',e=>{const k=KM[e.key];if(k&&k!='a')K[k]=0});
-let last=0,acc=0;
-function loop(t){if(!last)last=t;const dt=Math.min(100,t-last);last=t;acc+=dt;if(acc>50)acc=50;
-let steps=0;while(acc>=16.67&&steps<2){acc-=16.67;steps++;if(G&&!paused)upd()}draw();requestAnimationFrame(loop)}
-$('snd').textContent=S.mute?'🔇':'🔊';
-menu();requestAnimationFrame(loop);
-</script>
+    // Modales
+    const playModal = document.getElementById('playModal');
+    const playModalTitle = document.getElementById('playModalTitle');
+    const playModalEmoji = document.getElementById('playModalEmoji');
+    const playModalUrlText = document.getElementById('playModalUrlText');
+    const playModalExternal = document.getElementById('playModalExternal');
+    const playIframe = document.getElementById('playIframe');
+    const playFallbackBox = document.getElementById('playFallbackBox');
+    const playFallbackDesc = document.getElementById('playFallbackDesc');
+    const playFallbackControls = document.getElementById('playFallbackControls');
+
+    const urlModal = document.getElementById('urlModal');
+    const urlModalTitle = document.getElementById('urlModalTitle');
+    const gameUrlInput = document.getElementById('gameUrlInput');
+    const urlForm = document.getElementById('urlForm');
+
+    const addGameModal = document.getElementById('addGameModal');
+    const addGameForm = document.getElementById('addGameForm');
+
+    const exportModal = document.getElementById('exportModal');
+    const exportCodeArea = document.getElementById('exportCodeArea');
+
+    function loadGames() {
+      try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (!raw) return structuredClone(INITIAL_GAMES);
+        const parsed = JSON.parse(raw);
+        return Array.isArray(parsed) && parsed.length ? parsed : structuredClone(INITIAL_GAMES);
+      } catch {
+        return structuredClone(INITIAL_GAMES);
+      }
+    }
+
+    function saveGames() {
+      try {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(games));
+      } catch {
+        notify('No se pudo guardar en localStorage', '⚠️');
+      }
+    }
+
+    function notify(message, icon = '✅') {
+      const toast = document.getElementById('toast');
+      const toastIcon = document.getElementById('toastIcon');
+      const toastText = document.getElementById('toastText');
+      toastIcon.textContent = icon;
+      toastText.textContent = message;
+      toast.classList.remove('hidden');
+      toast.classList.add('flex');
+      clearTimeout(notify._timer);
+      notify._timer = setTimeout(() => {
+        toast.classList.add('hidden');
+        toast.classList.remove('flex');
+      }, 2600);
+    }
+
+    function escapeHtml(value = '') {
+      return String(value)
+        .replaceAll('&', '&amp;')
+        .replaceAll('<', '&lt;')
+        .replaceAll('>', '&gt;')
+        .replaceAll('"', '&quot;')
+        .replaceAll("'", '&#39;');
+    }
+
+function getAccentStyles(accent) {
+      if (accent === 'violet') {
+        return {
+          borderHover: 'hover:border-violet-400/60 hover:shadow-lg hover:shadow-violet-500/10',
+          badge: 'bg-violet-500/15 text-violet-300 border-violet-500/30',
+          playBtn: 'bg-violet-500 hover:bg-violet-400 text-white',
+          iconBg: 'from-violet-500/20 to-fuchsia-500/10 border-violet-500/30'
+        };
+      }
+      if (accent === 'lime') {
+        return {
+          borderHover: 'hover:border-lime-400/60 hover:shadow-lg hover:shadow-lime-500/10',
+          badge: 'bg-lime-400/15 text-lime-300 border-lime-400/30',
+          playBtn: 'bg-lime-400 hover:bg-lime-300 text-slate-950',
+          iconBg: 'from-lime-400/20 to-emerald-500/10 border-lime-400/30'
+        };
+      }
+      return {
+        borderHover: 'hover:border-cyan-400/60 hover:shadow-lg hover:shadow-cyan-500/10',
+        badge: 'bg-cyan-400/15 text-cyan-300 border-cyan-400/30',
+        playBtn: 'bg-cyan-400 hover:bg-cyan-300 text-slate-950',
+        iconBg: 'from-cyan-400/20 to-blue-500/10 border-cyan-400/30'
+      };
+    }
+
+    function updateStats() {
+      const total = games.length;
+      const linked = games.filter(g => g.url && g.url.trim().length > 0).length;
+      statTotalGames.textContent = String(total);
+      statLinkedGames.textContent = `${linked}/${total}`;
+    }
+
+    function getFilteredGames() {
+      const q = searchQuery.trim().toLowerCase();
+      return games.filter(game => {
+        const matchesCat = activeCategory === 'Todos' || game.category === activeCategory;
+        if (!matchesCat) return false;
+        if (!q) return true;
+        const haystack = [
+          game.title,
+          game.category,
+          game.badge,
+          game.description,
+          game.controls,
+          ...(Array.isArray(game.tags) ? game.tags : [])
+        ].join(' ').toLowerCase();
+        return haystack.includes(q);
+      });
+    }
+
+    function renderGames() {
+      updateStats();
+      const filtered = getFilteredGames();
+      gamesGrid.innerHTML = '';
+
+      if (!filtered.length) {
+        emptyResults.classList.remove('hidden');
+        return;
+      }
+      emptyResults.classList.add('hidden');
+
+      filtered.forEach(game => {
+        const styles = getAccentStyles(game.accent);
+        const hasUrl = Boolean(game.url && game.url.trim());
+        const tagsHtml = (game.tags || []).slice(0, 4).map(tag =>
+          `<span class="px-2 py-0.5 rounded-md text-[11px] font-medium bg-slate-900/90 text-slate-300 border border-slate-800">${escapeHtml(tag)}</span>`
+        ).join('');
+
+        const card = document.createElement('article');
+        card.className = `game-card rounded-3xl bg-[#111522] border border-slate-800/90 ${styles.borderHover} p-5 flex flex-col justify-between gap-4`;
+
+        card.innerHTML = `
+          <div class="space-y-3.5">
+            <div class="flex items-start justify-between gap-2">
+              <div class="w-12 h-12 rounded-2xl bg-gradient-to-br ${styles.iconBg} border flex items-center justify-center text-2xl shrink-0">
+                ${escapeHtml(game.emoji || '🎮')}
+              </div>
+              <span class="px-2.5 py-1 rounded-full text-[11px] font-semibold border ${styles.badge} text-right">
+                ${escapeHtml(game.badge || game.category)}
+              </span>
+            </div>
+
+            <div>
+              <div class="flex items-center justify-between gap-2">
+                <h2 class="font-display font-bold text-lg text-white leading-snug">
+                  ${escapeHtml(game.title)}
+                </h2>
+                <span class="text-[11px] font-medium px-2 py-0.5 rounded-full ${hasUrl ? 'bg-emerald-500/15 text-emerald-300 border border-emerald-500/30' : 'bg-slate-800/90 text-slate-400 border border-slate-700/70'} shrink-0">
+                  ${hasUrl ? 'URL lista' : 'Sin URL'}
+                </span>
+              </div>
+              <p class="text-xs sm:text-sm text-slate-300 mt-1.5 leading-relaxed">
+                ${escapeHtml(game.description)}
+              </p>
+            </div>
+
+            <div class="flex flex-wrap gap-1.5">
+              ${tagsHtml}
+            </div>
+          </div>
+
+          <div class="pt-2 border-t border-slate-800/80 flex items-center gap-2">
+            <button
+              type="button"
+              data-action="play"
+              data-id="${escapeHtml(game.id)}"
+              class="flex-1 py-2.5 px-3 rounded-xl text-xs sm:text-sm font-bold ${styles.playBtn} transition cursor-pointer"
+            >
+              Jugar
+            </button>
+            <button
+              type="button"
+              data-action="url"
+              data-id="${escapeHtml(game.id)}"
+              class="py-2.5 px-3 rounded-xl text-xs font-semibold bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 transition cursor-pointer"
+            >
+              URL
+            </button>
+          </div>
+        `;
+
+        gamesGrid.appendChild(card);
+      });
+    }
+
+// Filtros de categoría
+    document.querySelectorAll('.cat-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        activeCategory = btn.dataset.category || 'Todos';
+        document.querySelectorAll('.cat-btn').forEach(b => {
+          const isSelected = b.dataset.category === activeCategory;
+          b.className = isSelected
+            ? 'cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-cyan-400 text-slate-950'
+            : 'cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-[#111522] text-slate-300 hover:bg-slate-800 border border-slate-800';
+        });
+        renderGames();
+      });
+    });
+
+    searchInput.addEventListener('input', (e) => {
+      searchQuery = e.target.value || '';
+      renderGames();
+    });
+
+    document.getElementById('btnClearFilters').addEventListener('click', () => {
+      activeCategory = 'Todos';
+      searchQuery = '';
+      searchInput.value = '';
+      document.querySelectorAll('.cat-btn').forEach(b => {
+        const isAll = b.dataset.category === 'Todos';
+        b.className = isAll
+          ? 'cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-cyan-400 text-slate-950'
+          : 'cat-btn px-3.5 py-2 rounded-xl text-xs sm:text-sm font-semibold transition bg-[#111522] text-slate-300 hover:bg-slate-800 border border-slate-800';
+      });
+      renderGames();
+    });
+
+    // Delegación en tarjetas
+    gamesGrid.addEventListener('click', (e) => {
+      const target = e.target.closest('button[data-action]');
+      if (!target) return;
+      const action = target.dataset.action;
+      const id = target.dataset.id;
+      const game = games.find(g => g.id === id);
+      if (!game) return;
+
+      if (action === 'play') {
+        openPlayModal(game);
+      } else if (action === 'url') {
+        openUrlModal(game);
+      }
+    });
+
+    // Modal de juego
+    function openPlayModal(game) {
+      playModalEmoji.textContent = game.emoji || '🎮';
+      playModalTitle.textContent = game.title;
+      playFallbackDesc.textContent = game.description;
+      playFallbackControls.textContent = game.controls || 'Controles estándar en pantalla o teclado.';
+
+      const cleanUrl = (game.url || '').trim();
+      if (cleanUrl) {
+        playModalUrlText.textContent = cleanUrl;
+        playModalExternal.href = cleanUrl;
+        playModalExternal.classList.remove('pointer-events-none', 'opacity-50');
+        playIframe.src = cleanUrl;
+        playIframe.classList.remove('hidden');
+        playFallbackBox.classList.add('hidden');
+      } else {
+        playModalUrlText.textContent = 'Aún no tiene URL configurada';
+        playModalExternal.href = '#';
+        playModalExternal.classList.add('pointer-events-none', 'opacity-50');
+        playIframe.src = '';
+        playIframe.classList.add('hidden');
+        playFallbackBox.classList.remove('hidden');
+      }
+
+      playModal.classList.remove('hidden');
+      playModal.classList.add('flex');
+    }
+
+    function closePlayModal() {
+      playIframe.src = '';
+      playModal.classList.add('hidden');
+      playModal.classList.remove('flex');
+    }
+
+    document.getElementById('btnClosePlayModal').addEventListener('click', closePlayModal);
+    playModal.addEventListener('click', (e) => {
+      if (e.target === playModal) closePlayModal();
+    });
+
+    // Modal configurar URL
+    function openUrlModal(game) {
+      editingGameId = game.id;
+      urlModalTitle.textContent = game.title;
+      gameUrlInput.value = game.url || '';
+      urlModal.classList.remove('hidden');
+      urlModal.classList.add('flex');
+      setTimeout(() => gameUrlInput.focus(), 50);
+    }
+
+    function closeUrlModal() {
+      editingGameId = null;
+      urlModal.classList.add('hidden');
+      urlModal.classList.remove('flex');
+    }
+
+    document.getElementById('btnCloseUrlModal').addEventListener('click', closeUrlModal);
+    document.getElementById('btnCancelUrlModal').addEventListener('click', closeUrlModal);
+    urlModal.addEventListener('click', (e) => {
+      if (e.target === urlModal) closeUrlModal();
+    });
+
+    urlForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      if (!editingGameId) return;
+      const idx = games.findIndex(g => g.id === editingGameId);
+      if (idx === -1) return;
+      games[idx].url = gameUrlInput.value.trim();
+      saveGames();
+      renderGames();
+      closeUrlModal();
+      notify(`URL actualizada para ${games[idx].title}`);
+    });
+
+// Modal agregar juego
+    function openAddModal() {
+      addGameForm.reset();
+      document.getElementById('newEmoji').value = '🎮';
+      addGameModal.classList.remove('hidden');
+      addGameModal.classList.add('flex');
+    }
+
+    function closeAddModal() {
+      addGameModal.classList.add('hidden');
+      addGameModal.classList.remove('flex');
+    }
+
+    document.getElementById('btnOpenAddGame').addEventListener('click', openAddModal);
+    document.getElementById('btnCloseAddModal').addEventListener('click', closeAddModal);
+    document.getElementById('btnCancelAddModal').addEventListener('click', closeAddModal);
+    addGameModal.addEventListener('click', (e) => {
+      if (e.target === addGameModal) closeAddModal();
+    });
+
+    addGameForm.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const title = document.getElementById('newTitle').value.trim();
+      const description = document.getElementById('newDescription').value.trim();
+      if (!title || !description) return;
+
+      const category = document.getElementById('newCategory').value;
+      const badge = document.getElementById('newBadge').value.trim() || category;
+      const emoji = document.getElementById('newEmoji').value.trim() || '🎮';
+      const tagsRaw = document.getElementById('newTags').value.trim();
+      const tags = tagsRaw
+        ? tagsRaw.split(',').map(t => t.trim()).filter(Boolean)
+        : ['HTML5', 'JS'];
+      const url = document.getElementById('newUrl').value.trim();
+      const controls = document.getElementById('newControls').value.trim() || 'Móvil y PC: Controles en pantalla o teclado.';
+
+      const slug = title.toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '') || 'juego';
+      const uniqueId = `${slug}-${Date.now().toString(36)}`;
+      const accents = ['cyan', 'violet', 'lime'];
+      const accent = accents[games.length % accents.length];
+
+      games.push({
+        id: uniqueId,
+        title,
+        category,
+        badge,
+        accent,
+        emoji,
+        tags,
+        description,
+        controls,
+        url
+      });
+
+      saveGames();
+      renderGames();
+      closeAddModal();
+      notify(`"${title}" agregado a urgye.fun`);
+    });
+
+    // Exportar HTML
+    function buildExportedHtml() {
+      let htmlString = document.documentElement.outerHTML;
+      if (!htmlString.trim().toLowerCase().startsWith('<!doctype html>')) {
+        htmlString = '<!DOCTYPE html>\n' + htmlString;
+      }
+      const jsonCatalog = JSON.stringify(games, null, 2);
+      htmlString = htmlString.replace(
+        /const INITIAL_GAMES = \[[\s\S]*?\];/,
+        `const INITIAL_GAMES = ${jsonCatalog};`
+      );
+      htmlString = htmlString.replace(
+        /const STORAGE_KEY = '[^']+';/,
+        `const STORAGE_KEY = '${STORAGE_KEY}';`
+      );
+      return htmlString;
+    }
+
+    function openExportModal() {
+      exportCodeArea.value = buildExportedHtml();
+      exportModal.classList.remove('hidden');
+      exportModal.classList.add('flex');
+    }
+
+    function closeExportModal() {
+      exportModal.classList.add('hidden');
+      exportModal.classList.remove('flex');
+    }
+
+    document.getElementById('btnOpenExport').addEventListener('click', openExportModal);
+    document.getElementById('btnFooterExport').addEventListener('click', openExportModal);
+    document.getElementById('btnCloseExportModal').addEventListener('click', closeExportModal);
+    exportModal.addEventListener('click', (e) => {
+      if (e.target === exportModal) closeExportModal();
+    });
+
+    document.getElementById('btnCopyHtml').addEventListener('click', async () => {
+      try {
+        await navigator.clipboard.writeText(exportCodeArea.value);
+        notify('Código index.html copiado');
+      } catch {
+        exportCodeArea.select();
+        document.execCommand('copy');
+        notify('Código seleccionado para copiar');
+      }
+    });
+
+document.getElementById('btnDownloadHtml').addEventListener('click', () => {
+      const blob = new Blob([exportCodeArea.value], { type: 'text/html;charset=utf-8' });
+      const link = document.createElement('a');
+      link.href = URL.createObjectURL(blob);
+      link.download = 'index.html';
+      link.click();
+      URL.revokeObjectURL(link.href);
+      notify('index.html descargado');
+    });
+
+    // Restablecer catálogo
+    let confirmReset = false;
+    const btnResetCatalog = document.getElementById('btnResetCatalog');
+    btnResetCatalog.addEventListener('click', function () {
+      if (!confirmReset) {
+        confirmReset = true;
+        this.textContent = 'Toca de nuevo para confirmar';
+        notify('Toca otra vez para restaurar los 8 juegos base', '⚠️');
+        setTimeout(() => {
+          confirmReset = false;
+          this.textContent = 'Restablecer catálogo';
+        }, 3500);
+        return;
+      }
+      confirmReset = false;
+      this.textContent = 'Restablecer catálogo';
+      games = structuredClone(INITIAL_GAMES);
+      saveGames();
+      renderGames();
+      notify('Catálogo base restaurado');
+    });
+
+    // Render inicial
+    renderGames();
+  </script>
 </body>
 </html>
